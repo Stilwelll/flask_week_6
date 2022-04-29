@@ -18,8 +18,8 @@
         <nav class="nav bg-dark d-flex justify-content-around border-bottom">
             <a href="{{ url_for('phonebook.index') }}" class="link-light">Home</a>
             {% if current_user.is_authenticated %}
-                <a href="{{ url_for('phonebook.phonebookentry') }}" class="link-light">Add Entrys</a>
-                <a href="{{ url_for('phonebook.myphonebook') }}" class="link-light">View Your PhoneBook</a>
+                <a href="{{ url_for('phonebook.itementry') }}" class="link-light">Add Entrys</a>
+                <a href="{{ url_for('phonebook.myitems') }}" class="link-light">View Your PhoneBook</a>
                 <a href="{{ url_for('auth.logout') }}" class="link-light">Log Out</a>
             {% else %}
                 <a href="{{ url_for('auth.signup') }}" class="link-light">Sign Up</a>
