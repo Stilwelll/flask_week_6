@@ -1,15 +1,14 @@
-from flask_sqlalchemy import SQLAlchemy
 from app import app
 from flask import redirect, render_template, url_for
-from app.forms import SignUpForm, PhoneBookForm
-from app.models import User, Post, PhoneBookInfo
-
+from flask_login import current_user, login_user, logout_user, login_required
+from app.forms import SignUpForm, AddressForm, LoginForm
+from app.models import User, Post, Address
 
 @app.route('/')
 def index():
     title = 'Home'
-    user = {'id': 1, 'username': 'bstanton', 'email': 'brians@codingtemple.com'}
-    return render_template('index.html', current_user=user, title=title)
+    posts = Post.query.all()
+    return render_template('index.html', title=title, posts=posts)
 
 
 @app.route('/signup', methods=["GET", "POST"])
@@ -29,22 +28,36 @@ def signup():
     return render_template('signup.html', title=title, form=form)
 
 
-@app.route('/login')
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     title = 'Log In'
-    return render_template('login.html', title=title)
-
-@app.route('/phonebook', methods=["GET", "POST"])
-def phonebook():
-    title = 'Phone Book'
-    form = PhoneBookForm()
+    form = LoginForm()
     if form.validate_on_submit():
-        first_name = form.firstname.data
-        last_name = form.lastname.data
-        phone_number = form.phonenumber.data
+        username = form.username.data
+        password = form.password.data
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            login_user(user)
+            print('User has been logged in')
+            return redirect(url_for('index'))
+    return render_template('login.html', title=title, form=form)
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+
+@app.route('/register-address', methods=['GET', 'POST'])
+@login_required
+def register_address():
+    title = 'Register Address'
+    form = AddressForm()
+    addresses = current_user.addresses.all()
+    if form.validate_on_submit():
+        name = form.name.data
         address = form.address.data
-        new_info = PhoneBookInfo(first_name=first_name, last_name=last_name, phone_number=phone_number, address=address)
+        phone = form.phone_number.data
+        Address(name=name, address=address, phone_number=phone, user_id=current_user.id)
         return redirect(url_for('index'))
-
-    return render_template('phonebook.html', title=title, form=form)
-
+    return render_template('register_address.html', title=title, form=form, addresses=addresses)

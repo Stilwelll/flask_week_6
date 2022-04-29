@@ -1,15 +1,21 @@
-from app import db
+from app import db, login
+from flask_login import UserMixin
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
-class User(db.Model):
+@login.user_loader
+def get_user(user_id):
+    return User.query.get(user_id)
+
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(256), nullable=False)
     date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    addresses = db.relationship('Address', backref='owner', lazy='dynamic')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -37,14 +43,26 @@ class Post(db.Model):
     def __repr__(self):
         return f"<Post|{self.title}>"
 
-class PhoneBookInfo(db.Model):
+
+class Address(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(50), unique=True, nullable=False)
-    last_name = db.Column(db.String(50), unique=True, nullable=False)
-    address = db.Column(db.String(256), nullable=False)
-    phone_number = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    address = db.Column(db.String(100), unique=True, nullable=False)
+    phone_number = db.Column(db.String(15), unique=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    date_created_1 = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
+    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        db.session.add(self)
+        db.session.commit()
+
     def __repr__(self):
-        return f"<Phone Book Info|{self.phonenumber}>"
+        return f"<Address {self.id} |{self.name}>"
+
+    def __str__(self):
+        return f"""
+        Name: {self.name}
+        Address: {self.address}
+        Phone: {self.phone_number}
+        """
